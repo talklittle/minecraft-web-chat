@@ -121,8 +121,10 @@
 <script>
     let ws;
     let reconnectAttempts = 0;
-    const maxReconnectAttempts = 5;
-    const maxStoredMessages = 5000; // Max number of messages to keep in storage
+    const maxReconnectAttempts = 5; // TODO: add a reconnect button after automatic retries are done.
+    
+    // TODO: probably make max stored messages a config
+    const maxStoredMessages = 5000; // Max number of messages to keep in storage. 
 
     // Load previous messages when page loads
     function loadStoredMessages() {
@@ -180,6 +182,7 @@
         messages.insertBefore(div, messages.firstChild);
 
         if (store) {
+            // Note, we store the original text as on reload all messages go through this function again anyway. 
             storeMessage(text);
         }
     }
@@ -218,6 +221,7 @@
     }
 
     function sendMessage() {
+        // TODO: cut message up if it is too long and send in parts. Possibly do this server side... 
         const input = document.getElementById('messageInput');
         if (ws && ws.readyState === WebSocket.OPEN && input.value.trim()) {
             ws.send(input.value);
