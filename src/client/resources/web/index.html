@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minecraft Chat</title>
+</head>
+<body>
+<div id="messages"></div>
+<input type="text" id="messageInput">
+<button onclick="sendMessage()">Send</button>
+<div id="status">Disconnected</div>
+
+<script>
+    let ws;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+
+    function connect() {
+        ws = new WebSocket('ws://localhost:8081');
+
+        ws.onopen = function() {
+            console.log('Connected to server');
+            document.getElementById('status').textContent = 'Connected';
+            reconnectAttempts = 0;
+        };
+
+        ws.onclose = function() {
+            document.getElementById('status').textContent = 'Disconnected';
+            console.log('Connection closed. Attempting to reconnect...');
+
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                setTimeout(connect, 2000); // Try to reconnect after 2 seconds
+            }
+        };
+
+        ws.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            document.getElementById('status').textContent = 'Error: ' + error;
+        };
+
+        ws.onmessage = function(event) {
+            const div = document.createElement('div');
+            div.textContent = event.data;
+            document.getElementById('messages').appendChild(div);
+            div.scrollIntoView();
+        };
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('messageInput');
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(input.value);
+            input.value = '';
+        } else {
+            console.log('WebSocket is not connected');
+            document.getElementById('status').textContent = 'Not connected - message not sent';
+        }
+    }
+
+    // Start connection when page loads
+    connect();
+
+    // Also allow Enter key to send messages
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+</script>
+</body>
+</html>
