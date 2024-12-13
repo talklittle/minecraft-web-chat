@@ -2,18 +2,18 @@
 	"schemaVersion": 1,
 	"id": "web-chat",
 	"version": "${version}",
-	"name": "web-chat",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Web chat",
+	"description": "Chat in minecraft from your browser",
 	"authors": [
-		"Me!"
+		"Creesch"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/creesch/minecraft-web-chat",
+		"sources": "https://github.com/creesch/minecraft-web-chat"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/web-chat/icon.png",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
 		"main": [
 			"dev.creesch.Webchat"
@@ -22,13 +22,6 @@
 			"dev.creesch.WebchatClient"
 		]
 	},
-	"mixins": [
-		"web-chat.mixins.json",
-		{
-			"config": "web-chat.client.mixins.json",
-			"environment": "client"
-		}
-	],
 	"depends": {
 		"fabricloader": ">=0.16.9",
 		"minecraft": "~1.21.1",
