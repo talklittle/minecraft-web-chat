@@ -2,6 +2,10 @@
 <html>
 <head>
     <title>Minecraft Chat</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="icon_32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon_16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon_180.png">
+    <link rel="manifest" href="site.webmanifest">
     <style>
         body {
             margin: 0;
@@ -120,6 +124,7 @@
 
 <script>
     let ws;
+    const wsPort = parseInt(location.port, 10) + 1;
     let reconnectAttempts = 0;
     const maxReconnectAttempts = 5; // TODO: add a reconnect button after automatic retries are done.
     
@@ -188,7 +193,8 @@
     }
 
     function connect() {
-        ws = new WebSocket('ws://localhost:8081');
+        const
+        ws = new WebSocket(`ws://localhost:${wsPort}`);
 
         ws.onopen = function() {
             console.log('Connected to server');
