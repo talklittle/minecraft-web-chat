@@ -1,7 +1,7 @@
 let ws;
 const wsPort = parseInt(location.port, 10) + 1;
 let reconnectAttempts = 0;
-const maxReconnectAttempts = 5; // TODO: add a reconnect button after automatic retries are done.
+const maxReconnectAttempts = 300; // TODO: add a reconnect button after automatic retries are done.
 
 // TODO: probably make max stored messages a config
 const maxStoredMessages = 5000; // Max number of messages to keep in storage. 
