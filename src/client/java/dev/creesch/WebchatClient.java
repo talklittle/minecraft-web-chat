@@ -1,6 +1,7 @@
 package dev.creesch;
 
 
+import dev.creesch.config.ModConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
@@ -15,8 +16,10 @@ public class WebchatClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		LOGGER.info("web chat loaded");
+		ModConfig.init();
 		webInterface = new WebInterface();
+
+		LOGGER.info("web chat loaded");
 
 		// Chat messages from users.
 		// TODO: extract more information, put in object serialize to json

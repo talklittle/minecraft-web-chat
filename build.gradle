@@ -16,6 +16,8 @@ repositories {
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
+	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
+	maven { url "https://maven.isxander.dev/releases" } // YACL
 }
 
 loom {
@@ -31,17 +33,26 @@ loom {
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	// Jetty dependencies - using the new EE10 packages
-	implementation 'org.java-websocket:Java-WebSocket:1.5.7'
-	include('org.java-websocket:Java-WebSocket:1.5.7')
-	implementation 'org.nanohttpd:nanohttpd:2.3.1'
-	include('org.nanohttpd:nanohttpd:2.3.1')
+	modImplementation "com.terraformersmc:modmenu:${project.mod_menu_version}"
+	modImplementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
+
+	// Java dependencies
+	// Compile only
+	annotationProcessor "org.projectlombok:lombok:${project.lombok_version}"
+	compileOnly "org.projectlombok:lombok:${project.lombok_version}"
+
+	// Included
+	implementation "org.java-websocket:Java-WebSocket:${project.java_websocket_version}"
+	include("org.java-websocket:Java-WebSocket:${project.java_websocket_version}")
+	implementation "org.nanohttpd:nanohttpd:${nanohttpd_version}"
+	include("org.nanohttpd:nanohttpd:${nanohttpd_version}")
+	implementation "com.google.code.gson:gson:${project.gson_version}"
+	include("com.google.code.gson:gson:${project.gson_version}")
 	
 }
 

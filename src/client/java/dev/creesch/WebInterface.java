@@ -1,5 +1,6 @@
 package dev.creesch;
 
+import dev.creesch.config.ModConfig;
 import fi.iki.elonen.NanoHTTPD;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -21,11 +22,13 @@ public class WebInterface {
     private final ChatWebSocketServer websocketServer;
     private final Set<WebSocket> connections = new HashSet<>();
 
+    ModConfig config = ModConfig.HANDLER.instance();
+
     public static final Logger LOGGER = LoggerFactory.getLogger("web-chat");
 
     public WebInterface() {
-        webServer = new WebServer(8080);
-        websocketServer = new ChatWebSocketServer(8081);
+        webServer = new WebServer(config.httpPortNumber);
+        websocketServer = new ChatWebSocketServer(config.httpPortNumber + 1);
 
         try {
             webServer.start();
@@ -59,6 +62,7 @@ public class WebInterface {
                 String mimeType = "text/html";
                 if (uri.endsWith(".css")) mimeType = "text/css";
                 if (uri.endsWith(".js")) mimeType = "text/javascript";
+                if (uri.endsWith(".manifest")) mimeType = "application/manifest+json";
 
                 return newChunkedResponse(Response.Status.OK, mimeType, inputStream);
             } catch (Exception e) {
