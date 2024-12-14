@@ -5,13 +5,12 @@ import dev.creesch.config.ModConfig;
 import dev.creesch.util.NamedLogger;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.text.ClickEvent;
 
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.text.Text;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.minecraft.util.Formatting;
 
 public class WebchatClient implements ClientModInitializer {
 	private static final NamedLogger LOGGER = new NamedLogger("web-chat");
@@ -21,7 +20,7 @@ public class WebchatClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ModConfig.init();
 		webInterface = new WebInterface();
-
+		ModConfig config = ModConfig.HANDLER.instance();
 
 
 		LOGGER.info("web chat loaded");
@@ -46,6 +45,21 @@ public class WebchatClient implements ClientModInitializer {
 				LOGGER.info("Got game message as JSON: {}", json);
 				webInterface.broadcastMessage(json);
 			}
+		});
+
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+			client.execute(() -> {
+				if (client.player != null) {
+					String webchatPort = String.valueOf(config.httpPortNumber);
+					Text message = Text.literal("Web chat:")
+							.append(Text.literal("http://localhost:" + webchatPort)
+								.formatted(Formatting.BLUE, Formatting.UNDERLINE)
+								.styled(style -> style.withClickEvent(
+										new ClickEvent(ClickEvent.Action.OPEN_URL, "http://localhost:" + webchatPort)
+							)));
+					client.player.sendMessage(message, false);
+				}
+			});
 		});
 
 
