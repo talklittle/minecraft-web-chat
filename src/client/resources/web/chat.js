@@ -8,7 +8,7 @@ const maxStoredMessages = 5000; // Max number of messages to keep in storage.
 
 // Load previous messages when page loads
 function loadStoredMessages() {
-    const stored = localStorage.getItem('chatMessages');
+    const stored = localStorage.getItem('chatMessagesJSON');
     if (stored) {
         const messages = JSON.parse(stored);
         // Reverse the array to show messages in correct order
@@ -32,7 +32,7 @@ function storeMessage(json) {
             messages = messages.slice(0, maxStoredMessages);
         }
 
-        localStorage.setItem('chatMessages', JSON.stringify(messages));
+        localStorage.setItem('chatMessagesJSON', JSON.stringify(messages));
     } catch (e) {
         console.warn('Failed to store message:', e);
     }
@@ -42,7 +42,7 @@ function storeMessage(json) {
 function addMessage(json, store = true) {
     console.log(json);
     const div = document.createElement('div');
-    div.className = 'message'; 
+    div.className = 'message';
     div.innerHTML = parseMinecraftText(json);
     const messages = document.getElementById('messages');
     messages.insertBefore(div, messages.firstChild);
@@ -54,8 +54,7 @@ function addMessage(json, store = true) {
 }
 
 function connect() {
-    const
-        ws = new WebSocket(`ws://localhost:${wsPort}`);
+    ws = new WebSocket(`ws://localhost:${wsPort}`);
 
     ws.onopen = function () {
         console.log('Connected to server');
@@ -90,6 +89,9 @@ function connect() {
 function sendMessage() {
     // TODO: cut message up if it is too long and send in parts. Possibly do this server side... 
     const input = document.getElementById('messageInput');
+    console.log(ws);
+    console.log(ws.readyState);
+    console.log(input.value);
     if (ws && ws.readyState === WebSocket.OPEN && input.value.trim()) {
         ws.send(input.value);
         input.value = '';
