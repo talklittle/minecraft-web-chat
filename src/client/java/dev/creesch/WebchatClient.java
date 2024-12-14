@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 public class WebchatClient implements ClientModInitializer {
 	private static final NamedLogger LOGGER = new NamedLogger("web-chat");
-	//public static final NamedLogger LOGGER = new NamedLogger(LogManager.getFormatterLogger(MOD_NAME));
 	private WebInterface webInterface;
 
 	@Override
