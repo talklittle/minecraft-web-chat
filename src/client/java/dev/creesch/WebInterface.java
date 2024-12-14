@@ -1,19 +1,17 @@
 package dev.creesch;
 
 import dev.creesch.config.ModConfig;
+import dev.creesch.util.NamedLogger;
 import fi.iki.elonen.NanoHTTPD;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.WebSocket;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +22,7 @@ public class WebInterface {
 
     ModConfig config = ModConfig.HANDLER.instance();
 
-    public static final Logger LOGGER = LoggerFactory.getLogger("web-chat");
+    private static final NamedLogger LOGGER = new NamedLogger("web-chat");
 
     public WebInterface() {
         webServer = new WebServer(config.httpPortNumber);
