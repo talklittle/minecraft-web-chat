@@ -6,6 +6,16 @@ const maxReconnectAttempts = 300; // TODO: add a reconnect button after automati
 // TODO: probably make max stored messages a config
 const maxStoredMessages = 5000; // Max number of messages to keep in storage. 
 
+// Used for the favicon
+let messageCount = 0;
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        messageCount = 0;
+        faviconCounter(0);
+    }
+});
+
 // Load previous messages when page loads
 function loadStoredMessages() {
     const stored = localStorage.getItem('chatMessagesJSON');
@@ -80,8 +90,12 @@ function connect() {
         console.error('WebSocket error:', error);
         document.getElementById('status').textContent = 'Error: ' + error;
     };
-
+  
     ws.onmessage = function (event) {
+        if (document.visibilityState !== 'visible') {
+            messageCount++;
+            faviconCounter(messageCount);
+        }
         addMessage(event.data);
     };
 }
