@@ -1,4 +1,10 @@
+// @ts-check
 'use strict';
+
+/**
+ * Render a favicon with a counter.
+ * @param {number} count
+ */
 function faviconCounter(count) {
     const sizes = [16, 32];
     const links = {};
@@ -8,6 +14,7 @@ function faviconCounter(count) {
       canvas.width = size;
       canvas.height = size;
       const ctx = canvas.getContext('2d');
+      if (!ctx) return;
       
       const img = new Image();
       img.src = `icon_${size}.png`;
@@ -26,18 +33,19 @@ function faviconCounter(count) {
           // Draw the outline
           ctx.strokeStyle = '#56b6c2';
           ctx.lineWidth = size * 0.15; 
-          ctx.strokeText(count > 99 ? '99+' : count, x, y);
+          ctx.strokeText(count > 99 ? '99+' : `${count}`, x, y);
           
           // Draw the fill
           ctx.fillStyle = '#000000';
-          ctx.fillText(count > 99 ? '99+' : count, x, y);
+          ctx.fillText(count > 99 ? '99+' : `${count}`, x, y);
         }
         
+        /** @type {HTMLLinkElement | null} */
         const link = document.querySelector(`link[rel="icon"][sizes="${size}x${size}"]`);
         if (link) {
           link.href = canvas.toDataURL();
         }
       };
     });
-  }
+}
 

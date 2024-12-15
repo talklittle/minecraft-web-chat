@@ -1,4 +1,6 @@
+// @ts-check
 'use strict';
+
 // https://github.com/PrismarineJS/minecraft-data 1.21.1
 const translations = {
     "accessibility.onboarding.accessibility.button": "Accessibility Settings...",

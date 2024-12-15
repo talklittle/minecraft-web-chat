@@ -1,5 +1,8 @@
+// @ts-check
 'use strict';
-let ws;
+
+/** @type {WebSocket | null} */
+let ws = null;
 const wsPort = parseInt(location.port, 10) + 1;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 300; // TODO: add a reconnect button after automatic retries are done.
@@ -21,19 +24,23 @@ document.addEventListener('visibilitychange', () => {
 function loadStoredMessages() {
     const stored = localStorage.getItem('chatMessagesJSON');
     if (stored) {
+        /** @type {any[]} */
         const messages = JSON.parse(stored);
         // Reverse the array to show messages in correct order
         messages.reverse().forEach(msg => addMessage(msg, false));
     }
 }
 
-// Store messages in localStorage
+/**
+ * Store messages in localStorage.
+ * @param {any[]} json
+ */
 function storeMessage(json) {
     try {
         let messages = [];
         const stored = localStorage.getItem('chatMessagesJSON');
         if (stored) {
-            messages = JSON.parse(stored);
+            messages = /** @type {any[]} */ (JSON.parse(stored));
         }
 
         messages.unshift(json); // Add new message at start
@@ -49,13 +56,19 @@ function storeMessage(json) {
     }
 }
 
-
+/**
+ * Add a message to the chat.
+ * @param {any} json
+ * @param {boolean} store
+ */
 function addMessage(json, store = true) {
     console.log(json);
     const div = document.createElement('div');
     div.className = 'message';
     div.innerHTML = parseMinecraftText(json);
-    const messages = document.getElementById('messages');
+    const messages = /** @type {HTMLDivElement | null} */ (document.getElementById('messages'));
+    if (!messages) return;
+
     messages.insertBefore(div, messages.firstChild);
 
     if (store) {
@@ -69,14 +82,18 @@ function connect() {
 
     ws.onopen = function () {
         console.log('Connected to server');
-        const status = document.getElementById('status');
+        const status = /** @type {HTMLDivElement | null} */ (document.getElementById('status'));
+        if (!status) return;
+
         status.textContent = 'Connected';
         status.className = 'status-connected';
         reconnectAttempts = 0;
     };
 
     ws.onclose = function () {
-        const status = document.getElementById('status');
+        const status = /** @type {HTMLDivElement | null} */ (document.getElementById('status'));
+        if (!status) return;
+
         status.textContent = 'Disconnected';
         status.className = 'status-disconnected';
         console.log('Connection closed. Attempting to reconnect...');
@@ -89,9 +106,12 @@ function connect() {
 
     ws.onerror = function (error) {
         console.error('WebSocket error:', error);
-        document.getElementById('status').textContent = 'Error: ' + error;
+        const status = /** @type {HTMLDivElement | null} */ (document.getElementById('status'));
+        if (!status) return;
+
+        status.textContent = 'Error: ' + error;
     };
-  
+
     ws.onmessage = function (event) {
         if (document.visibilityState !== 'visible') {
             messageCount++;
@@ -103,9 +123,11 @@ function connect() {
 
 function sendMessage() {
     // TODO: cut message up if it is too long and send in parts. Possibly do this server side... 
-    const input = document.getElementById('messageInput');
+    const input = /** @type {HTMLTextAreaElement | null} */ (document.getElementById('messageInput'));
+    if (!input) return;
+
     console.log(ws);
-    console.log(ws.readyState);
+    console.log(ws?.readyState);
     console.log(input.value);
     if (ws && ws.readyState === WebSocket.OPEN && input.value.trim()) {
         ws.send(input.value);
@@ -114,7 +136,9 @@ function sendMessage() {
         return;
     } else {
         console.log('WebSocket is not connected');
-        const status = document.getElementById('status');
+        const status = /** @type {HTMLDivElement | null} */ (document.getElementById('status'));
+        if (!status) return;
+
         status.textContent = 'Not connected - message not sent';
         status.className = 'status-disconnected';
     }
@@ -125,15 +149,15 @@ connect();
 loadStoredMessages();
 
 // Allow Enter key to send messages
-document.getElementById('messageInput').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        sendMessage();
-    }
-});
+const input = /** @type {HTMLTextAreaElement | null} */ (document.getElementById('messageInput'));
+if (input) {
+    // Focus input on load
+    input.focus();
 
-// Focus input on load
-document.getElementById('messageInput').focus();
-
-
-
+    input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+}
