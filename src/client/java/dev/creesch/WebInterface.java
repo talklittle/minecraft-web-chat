@@ -70,7 +70,8 @@ public class WebInterface {
                 return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Invalid path");
             }
 
-            try (InputStream inputStream = WebchatClient.class.getResourceAsStream("/web" + uri)) {
+            try {
+                InputStream inputStream = WebchatClient.class.getResourceAsStream("/web" + uri);
                 if (inputStream == null) {
                     return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "File not found");
                 }
