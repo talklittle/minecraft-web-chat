@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class WebInterface {
@@ -42,25 +43,40 @@ public class WebInterface {
             super(port);
         }
 
+        private static final Map<String, String> MIME_TYPES = Map.of(
+                ".html", "text/html",
+                ".css", "text/css",
+                ".js", "application/javascript",
+                ".png", "image/png",
+                ".webmanifest", "application/manifest+json"
+        );
+
         @Override
         public Response serve(IHTTPSession session) {
             String uri = session.getUri();
-
+            LOGGER.info("Attempting to serve request: {}", uri);
             // Serve index.html as default
             if (uri.equals("/")) {
                 uri = "/index.html";
             }
 
-            try {
-                InputStream inputStream = WebchatClient.class.getResourceAsStream("/web" + uri);
+            // If we still have a / at the end someone is trying to get the contents of subdirectory. We are not doing that.
+            if (uri.endsWith("/")) {
+                return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT, "Unauthorized access");
+            }
+
+            // Not really a factor in this context, but just in case anyone exposes this to the wider world we want to be a little bit safe.
+            if (uri.contains("..")) {
+                return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Invalid path");
+            }
+
+            try (InputStream inputStream = WebchatClient.class.getResourceAsStream("/web" + uri)) {
                 if (inputStream == null) {
                     return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "File not found");
                 }
 
-                String mimeType = "text/html";
-                if (uri.endsWith(".css")) mimeType = "text/css";
-                if (uri.endsWith(".js")) mimeType = "text/javascript";
-                if (uri.endsWith(".manifest")) mimeType = "application/manifest+json";
+                String extension = uri.substring(uri.lastIndexOf('.'));
+                String mimeType = MIME_TYPES.getOrDefault(extension, "application/octet-stream");
 
                 return newChunkedResponse(Response.Status.OK, mimeType, inputStream);
             } catch (Exception e) {
