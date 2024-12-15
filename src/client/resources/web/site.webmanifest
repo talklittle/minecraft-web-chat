@@ -2,12 +2,12 @@
     "name": "Minecraft web chat",
     "icons": [
         {
-            "src": "icon_32.png",
+            "src": "img/icon_32.png",
             "sizes": "32x32",
             "type": "image/png"
         },
         {
-            "src": "icon_16.png",
+            "src": "img/icon_16.png",
             "sizes": "16x16",
             "type": "image/png"
         }
