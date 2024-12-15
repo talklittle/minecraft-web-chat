@@ -1,3 +1,4 @@
+'use strict';
 function faviconCounter(count) {
     const sizes = [16, 32];
     const links = {};

@@ -1,3 +1,4 @@
+'use strict';
 // Minecraft JSON message parsing to HTML. 
 // A lot of the code below has been inspired (though not directly copied) by prismarine-chat: https://github.com/PrismarineJS/prismarine-chat 
 
@@ -267,6 +268,9 @@ function formatComponent(component, depth = 0) {
                     hoverContent = typeof component.hoverEvent.contents.name === 'string' 
                         ? component.hoverEvent.contents.name 
                         : formatComponentPlainText(component.hoverEvent.contents.name);
+                } else if (typeof component.hoverEvent.contents === 'object') {
+                    // Handle translation objects in hover content
+                    hoverContent = formatComponentPlainText(component.hoverEvent.contents);
                 } else {
                     hoverContent = JSON.stringify(component.hoverEvent.contents);
                 }

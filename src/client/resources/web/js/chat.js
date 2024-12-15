@@ -1,3 +1,4 @@
+'use strict';
 let ws;
 const wsPort = parseInt(location.port, 10) + 1;
 let reconnectAttempts = 0;
