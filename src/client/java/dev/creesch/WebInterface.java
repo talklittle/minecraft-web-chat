@@ -105,9 +105,7 @@ public class WebInterface {
             connections.remove(conn);
         }
 
-        @Override
-        public void onMessage(WebSocket conn, String message) {
-            LOGGER.info("Received message from " + conn.getRemoteSocketAddress() + ": " + message);
+        private void sendMinecraftMessage(String message) {
             MinecraftClient client = MinecraftClient.getInstance();
             // Need to schedule on the main thread since we're coming from websocket thread
             client.execute(() -> {
@@ -116,6 +114,20 @@ public class WebInterface {
                     player.networkHandler.sendChatMessage(message);
                 }
             });
+        }
+
+        @Override
+        public void onMessage(WebSocket conn, String message) {
+            LOGGER.info("Received message from " + conn.getRemoteSocketAddress() + ": " + message);
+            int maxLength = 256;
+            if (message.length() > maxLength) {
+                for (int i = 0; i < message.length(); i += maxLength) {
+                    int end = Math.min(i + maxLength, message.length());
+                    sendMinecraftMessage(message.substring(i, end));
+                }
+            } else {
+                sendMinecraftMessage(message);
+            }
         }
 
         @Override
