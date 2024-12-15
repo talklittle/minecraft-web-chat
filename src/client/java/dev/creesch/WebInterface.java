@@ -119,6 +119,8 @@ public class WebInterface {
         @Override
         public void onMessage(WebSocket conn, String message) {
             LOGGER.info("Received message from " + conn.getRemoteSocketAddress() + ": " + message);
+            // Replace known illegal characters like linebreaks, control characters, zero width characters, etc
+            message = message.replaceAll("[\\n\\r§\u00A7\\u0000-\\u001F\\u200B-\\u200F\\u2028-\\u202F]", "");
             int maxLength = 256;
             if (message.length() > maxLength) {
                 for (int i = 0; i < message.length(); i += maxLength) {
