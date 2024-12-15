@@ -126,6 +126,7 @@ loadStoredMessages();
 // Allow Enter key to send messages
 document.getElementById('messageInput').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
+        e.preventDefault();
         sendMessage();
     }
 });
