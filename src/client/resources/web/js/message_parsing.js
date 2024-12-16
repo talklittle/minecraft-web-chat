@@ -4,7 +4,6 @@
 // Minecraft JSON message parsing to HTML. 
 // A lot of the code below has been inspired (though not directly copied) by prismarine-chat: https://github.com/PrismarineJS/prismarine-chat 
 
-
 // These limits prevent DoS attacks and stack overflow issues from maliciously crafted messages 
 const MAX_CHAT_LENGTH = 4096;
 const MAX_CHAT_DEPTH = 8;
@@ -116,7 +115,7 @@ function initializeObfuscation() {
     /** @type {number | null} */
     let animationFrameId = null;
     let lastUpdate = 0;
-    
+
     const updateInterval = 50; // Rate limiting updates to 50ms intervals to balance animation smoothness with performance
 
     /**
@@ -198,7 +197,7 @@ function formatTranslation(key, args) {
 
         return args.map(formatComponent).join('');
     }
-    
+
     /** @type {string} */
     const template = translations[key] || key;
     if (!template) {
@@ -210,7 +209,6 @@ function formatTranslation(key, args) {
         console.warn(`Invalid arguments for translation key ${key}: `, args);
         return template;
     }
-
 
     try {
         // Handle numbered placeholders (%1$s, %2$s, etc.)
