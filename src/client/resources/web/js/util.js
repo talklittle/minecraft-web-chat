@@ -7,7 +7,6 @@
  */
 function faviconCounter(count) {
     const sizes = [16, 32];
-    const links = {};
     
     sizes.forEach(size => {
       const canvas = document.createElement('canvas');
