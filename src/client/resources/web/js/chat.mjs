@@ -7,7 +7,6 @@ import { parseMinecraftText, initializeObfuscation } from './message_parsing.mjs
 
 /** @type {WebSocket | null} */
 let ws = null;
-const wsPort = parseInt(location.port, 10) + 1;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 300; // TODO: add a reconnect button after automatic retries are done.
 
@@ -83,7 +82,7 @@ function addMessage(json, store = true) {
 }
 
 function connect() {
-    ws = new WebSocket(`ws://localhost:${wsPort}`);
+    ws = new WebSocket(`ws://${location.host}/chat`);
 
     ws.onopen = function () {
         console.log('Connected to server');
