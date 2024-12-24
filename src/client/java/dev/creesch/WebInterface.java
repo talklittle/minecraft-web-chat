@@ -1,15 +1,23 @@
 package dev.creesch;
 
+import com.google.gson.Gson;
 import dev.creesch.config.ModConfig;
+import dev.creesch.model.IncomingWebsocketJsonMessage;
+import dev.creesch.model.IncomingWebsocketJsonMessage.HistoryPayload;
+import dev.creesch.model.WebsocketJsonMessage;
+import dev.creesch.model.WebsocketMessageBuilder;
+import dev.creesch.storage.ChatMessageRepository;
 import dev.creesch.util.NamedLogger;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.websocket.WsContext;
+import io.javalin.websocket.WsMessageContext;
 import lombok.Getter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -19,15 +27,21 @@ public class WebInterface {
     // Server related things
     @Getter
     private final Javalin server;
+
+    private final Gson gson = new Gson();
     private final Set<WsContext> connections = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private static final NamedLogger LOGGER = new NamedLogger("web-chat");
     ModConfig config = ModConfig.HANDLER.instance();
-
+    private final ChatMessageRepository messageRepository;
     private static final Pattern ILLEGAL_CHARACTERS = Pattern.compile("[\\n\\r§\u00A7\\u0000-\\u001F\\u200B-\\u200F\\u2028-\\u202F]");
     private static final Pattern MULTIPLE_SPACES = Pattern.compile("\\s{2,}");
 
-    public WebInterface() {
+    public WebInterface(ChatMessageRepository messageRepository) {
+        if (messageRepository == null) {
+            throw new IllegalArgumentException("MessageRepository cannot be null");
+        }
+        this.messageRepository = messageRepository;
         server = createServer();
         setupWebSocket();
 
@@ -67,24 +81,16 @@ public class WebInterface {
         });
     }
 
-    private void setupWebSocket() {
-        server.ws("/chat", ws -> {
-            ws.onConnect(ctx -> {
-                // For localhost connections pinging likely isn't needed.
-                // But if someone wants to use the mod on their phone or something it might be useful to include it.
-                ctx.enableAutomaticPings(15, TimeUnit.SECONDS);
-                LOGGER.info("New WebSocket connection from {}", ctx.session.getRemoteAddress() != null ? ctx.session.getRemoteAddress() : "unknown remote address");
-                connections.add(ctx);
-            });
+    private void handleReceivedMessages(WsMessageContext ctx) {
+        LOGGER.info(ctx.message());
+        // Parse received message from json
+        IncomingWebsocketJsonMessage receivedMessage = gson.fromJson(
+            ctx.message(), IncomingWebsocketJsonMessage.class
+        );
 
-            ws.onClose(ctx -> {
-                LOGGER.info("WebSocket connection closed: {} with status {} and reason: {}", ctx.session.getRemoteAddress(), ctx.status(), ctx.reason());
-                connections.remove(ctx);
-            });
-
-            ws.onMessage(ctx -> {
-                String message = ctx.message();
-
+        switch (receivedMessage.getType()) {
+            case CHAT -> {
+                String message = gson.fromJson(receivedMessage.getPayload(), String.class);
                 if (message.trim().isEmpty()) {
                     LOGGER.warn("Received an empty message from {}", ctx.session.getRemoteAddress());
                     return;
@@ -96,7 +102,85 @@ public class WebInterface {
 
                 // Send the sanitized message to Minecraft chat
                 sendMinecraftMessage(message);
+            }
+            case HISTORY -> {
+                HistoryPayload historyPayload =
+                    gson.fromJson(receivedMessage.getPayload(), HistoryPayload.class);
+                int requestedLimit = historyPayload.getLimit();
+                int moreHistoryRequestedLimit = requestedLimit + 1; // Used further down to determine if there are more messages available in history.
+                LOGGER.info("Received history request: {}", historyPayload.getServerId());
+
+                List<WebsocketJsonMessage> historyMessages;
+                if (historyPayload.getBefore() != null) {
+                    historyMessages = messageRepository.getMessages(
+                        historyPayload.getServerId(),
+                        moreHistoryRequestedLimit,
+                        historyPayload.getBefore()
+                    );
+                } else {
+                    historyMessages = messageRepository.getMessages(
+                        historyPayload.getServerId(),
+                        moreHistoryRequestedLimit
+                    );
+                }
+
+                // Let's build metadata
+                WebsocketJsonMessage historyMetaDataMessage = WebsocketMessageBuilder.createHistoryMetaDataMessage(
+                    historyMessages,
+                    requestedLimit
+                );
+
+                // Send the history metadata first
+                ctx.send(gson.toJson(
+                    historyMetaDataMessage
+                ));
+
+                historyMessages.forEach(historicMessage -> {
+                    ctx.send(gson.toJson(
+                        historicMessage
+                    ));
+
+                });
+            }
+        }
+    }
+
+    private void setupWebSocket() {
+        server.ws("/chat", ws -> {
+            ws.onConnect(ctx -> {
+                // For localhost connections pinging likely isn't needed.
+                // But if someone wants to use the mod on their phone or something it might be useful to include it.
+                ctx.enableAutomaticPings(15, TimeUnit.SECONDS);
+                LOGGER.info("New WebSocket connection from {}", ctx.session.getRemoteAddress() != null ? ctx.session.getRemoteAddress() : "unknown remote address");
+                connections.add(ctx);
+
+                // If minecraft is connected to a server the client needs to know.
+                // Client should never be null, but again better safe than sorry.
+                MinecraftClient client = MinecraftClient.getInstance();
+                if (client == null || client.world == null) {
+                    return;
+                }
+                // Got a world, use JOIN state to communicate this
+                WebsocketJsonMessage joinMessage = WebsocketMessageBuilder.createConnectionStateMessage(WebsocketJsonMessage.ServerConnectionStates.JOIN);
+
+                String jsonMessage = gson.toJson(
+                    joinMessage
+                );
+                LOGGER.info(jsonMessage);
+                try {
+                    ctx.send(jsonMessage);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to send JOIN message to connection: {}", ctx.session.getRemoteAddress(), e);
+                }
             });
+
+            ws.onClose(ctx -> {
+                LOGGER.info("WebSocket connection closed: {} with status {} and reason: {}", ctx.session.getRemoteAddress(), ctx.status(), ctx.reason());
+                connections.remove(ctx);
+            });
+
+
+            ws.onMessage(ctx -> handleReceivedMessages(ctx));
 
             ws.onError(ctx -> {
                 LOGGER.error("WebSocket error: ", ctx.error());
@@ -161,10 +245,13 @@ public class WebInterface {
         });
     }
 
-    public void broadcastMessage(String message) {
+    public void broadcastMessage(WebsocketJsonMessage message) {
+        String jsonMessage = gson.toJson(message);
+        LOGGER.info(jsonMessage);
+
         connections.forEach(ctx -> {
             try {
-                ctx.send(message);
+                ctx.send(jsonMessage);
             } catch (Exception e) {
                 LOGGER.warn("Failed to send message to connection: {}", ctx.session.getRemoteAddress(), e);
             }

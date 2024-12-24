@@ -1,5 +1,8 @@
 // @ts-check
 'use strict';
+/**
+ * @typedef {import('./message_parsing.mjs').Component} Component
+ */
 
 /**
  * Server information matching ChatServerInfo on server
@@ -18,13 +21,41 @@
 
 /**
  * Chat message from Minecraft
- * @typedef {Object} ChatMessage
- * @property {'chatMessage'} type
- * @property {import('./message_parsing.mjs').Component} payload
+ * @typedef {BaseModServerMessage & {
+ *   type: 'chatMessage',
+ *   payload: {
+ *     history?: boolean,
+ *     component: Component,
+ *     uuid: string,
+ *   }
+ * }} ChatMessage
  */
 
 /**
- * @typedef {BaseModServerMessage & ChatMessage} ModServerMessage
+ * HistoryMetaData message from Minecraft
+ * @typedef {BaseModServerMessage & {
+ *   type: 'historyMetaData',
+ *   payload: {
+ *     oldestMessageTimestamp: number,
+ *     moreHistoryAvailable: boolean,
+ *   }
+ * }} HistoryMetaData
+ */
+
+/**
+ * @typedef {'init'| 'join' | 'disconnect'} ServerConnectionStates
+ */
+
+/**
+ * Server join or leave message from Minecraft
+ * @typedef {BaseModServerMessage & {
+ *   type: 'serverConnectionState',
+ *   payload: ServerConnectionStates
+ * }} ServerConnectionState
+ */
+
+/**
+ * @typedef {BaseModServerMessage & (ChatMessage | ServerConnectionState | HistoryMetaData)} ModServerMessage
  */
 
 /**
@@ -41,7 +72,9 @@ export function isModServerMessage(message) {
         return false;
     }
 
-    return message.type === 'chatMessage';
+    return message.type === 'chatMessage' ||
+        message.type === 'serverConnectionState' ||
+        message.type === 'historyMetaData';
 }
 
 /**
@@ -51,10 +84,10 @@ export function isModServerMessage(message) {
  */
 export function parseModServerMessage(rawMessage) {
     const message = JSON.parse(rawMessage);
-    
+
     if (!isModServerMessage(message)) {
         throw new Error('Invalid message type');
     }
-    
+
     return message;
 }
