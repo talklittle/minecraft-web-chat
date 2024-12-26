@@ -55,9 +55,29 @@ body {
 }
 
 .message {
+    position: relative;
     margin: 0.25rem 0;
-    padding: 0.25rem 0;
+    padding: 0.25rem 0.5rem;
     word-wrap: break-word;
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+}
+
+.message.ping {
+    background-color: rgba(76, 175, 80, 0.1);
+    border-radius: 0 2px 2px 0;
+}
+
+.message.ping::before {
+    content: '';
+    position: absolute;
+    left: calc(-0.25rem + 2px);
+    top: 0;
+    bottom: 0;
+    width: 0.25rem;
+    border-radius: 2px;
+    background-color: #4CAF50;
 }
 
 .message a {
@@ -69,6 +89,7 @@ body {
     color: #b7b7b7;
     font-size: 0.75rem;
     margin-right: 0.3rem;
+    margin-top: 0.15rem;
 }
 
 #input-area {

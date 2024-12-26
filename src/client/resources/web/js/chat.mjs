@@ -1,7 +1,7 @@
 // @ts-check
 'use strict';
 
-import { faviconCounter, formatTimestamp } from './util.mjs';
+import { updateFavicon, formatTimestamp } from './util.mjs';
 import { assertIsComponent, ComponentError, formatComponent, initializeObfuscation } from './message_parsing.mjs';
 import { parseModServerMessage } from './message_types.mjs';
 
@@ -31,8 +31,36 @@ let reconnectAttempts = 0;
 const messageHistoryLimit = 50;
 let isLoadingHistory = false;
 
-// Used for the favicon
-let messageCount = 0;
+const faviconInfo = {
+    messageCount: 0,
+    hasPing: false,
+
+    clear() {
+        this.messageCount = 0;
+        this.hasPing = false;
+        updateFavicon(this.messageCount, this.hasPing);
+    },
+
+    /**
+     * Update the favicon
+     * @param {number} messageCount
+     * @param {boolean} hasPing
+     */
+    update(messageCount, hasPing) {
+        this.messageCount = messageCount;
+        this.hasPing = hasPing;
+
+        updateFavicon(this.messageCount, this.hasPing);
+    },
+
+    getMessageCount() {
+        return this.messageCount;
+    },
+
+    getHasPing() {
+        return this.hasPing;
+    }
+};
 
 // Used to keep track of messages already shown. To prevent possible duplication on server join.
 /** @type {Set<string>} */
@@ -40,19 +68,10 @@ const displayedMessageIds = new Set();
 
 /**
  * Server information and related methods.
- * @type {{
- *   name: string | undefined;
- *   id: string | undefined;
- *   baseTitle: string;
- *   update: (name: string , id: string) => void;
- *   clear: () => void;
- *   getId: () => string | undefined;
- *   getName: () => string | undefined;
- * }}
  */
 const serverInfo = {
-    name: undefined,
-    id: undefined,
+    name: /** @type {string | undefined} */ (undefined),
+    id: /** @type {string | undefined} */ (undefined),
     baseTitle: document.title, // Store the page title on load so we can manipulate it based on events and always restore it.
 
     /**
@@ -143,8 +162,7 @@ const messageSendButtonElement = /** @type {HTMLButtonElement} */ (querySelector
 // Favicon updates if tab is not in focus
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        messageCount = 0;
-        faviconCounter(0);
+        faviconInfo.clear();
     }
 });
 
@@ -226,13 +244,23 @@ function handleChatMessage(message) {
     displayedMessageIds.add(message.payload.uuid);
 
     if (document.visibilityState !== 'visible') {
-        messageCount++;
-        faviconCounter(messageCount);
+        let hasPing = faviconInfo.getHasPing();
+        if (!message.payload.history) {
+            hasPing ||= message.payload.isPing;
+        }
+
+        faviconInfo.update(
+            faviconInfo.getMessageCount() + 1,
+            hasPing
+        );
     }
 
     requestAnimationFrame(() => {
         const div = document.createElement('div');
-        div.className = 'message';
+        div.classList.add('message');
+        if (message.payload.isPing) {
+            div.classList.add('ping');
+        }
 
         // Create timestamp outside of try block. That way errors can be timestamped as well for the moment they did happen.
         const { timeString, fullDateTime } = formatTimestamp(message.timestamp);
@@ -245,6 +273,7 @@ function handleChatMessage(message) {
 
         try {
             // Format the chat message - this uses the Component format from message_parsing
+            assertIsComponent(message.payload.component);
             const chatContent = formatComponent(message.payload.component);
             div.appendChild(chatContent);
         } catch (e) {
@@ -285,7 +314,6 @@ function handleChatMessage(message) {
         if (scrolledFromTop <= 1 && scrolledFromTop >= -35) {
             messagesElement.scrollTop = 0;
         }
-
     });
 }
 
@@ -469,7 +497,6 @@ function sendChatMessage() {
     sendWebsocketMessage('chat', chatInputElement.value);
     chatInputElement.value = '';
 }
-
 
 /**
  * ======================
