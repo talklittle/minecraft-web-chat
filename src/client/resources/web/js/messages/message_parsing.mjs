@@ -69,7 +69,7 @@ const VALID_HOVER_EVENTS = ['show_text', 'show_item', 'show_entity'];
 /**
  * @typedef {Object} ShowEntityHoverEvent
  * @property {'show_entity'} action - Displays entity information
- * @property {{ type: string, id: unknown, name?: string }} [contents] - The entity data to show
+ * @property {{ type: string, id: unknown, name?: string | Component }} [contents] - The entity data to show
  * @property {string} [value] - Deprecated: SNBT representation of the entity data to show.
  */
 
@@ -329,12 +329,24 @@ export function assertIsComponent(component, path = []) {
 
         if (
             'name' in hoverEvent.contents &&
-            typeof hoverEvent.contents.name !== 'string'
+            hoverEvent.contents.name !== null
         ) {
-            throw new ComponentError(
-                'HoverEvent.contents.name is not a string',
-                [...path, 'contents', 'name'],
-            );
+            if (typeof hoverEvent.contents.name === 'string') {
+                return;
+            }
+
+            if (typeof hoverEvent.contents.name !== 'object') {
+                throw new ComponentError(
+                    'HoverEvent.contents.name is not a string or valid component',
+                    [...path, 'contents', 'name'],
+                );
+            }
+
+            assertIsComponent(hoverEvent.contents.name, [
+                ...path,
+                'contents',
+                'name',
+            ]);
         }
     }
 
@@ -820,6 +832,10 @@ function formatHoverEvent(hoverEvent) {
                 // Don't attempt to parse SNBT data in hoverEvent.value
                 console.warn('Unsupported legacy hoverEvent');
                 return '';
+            }
+
+            if (typeof hoverEvent.contents.name === 'object') {
+                return formatComponentPlainText(hoverEvent.contents.name);
             }
 
             return hoverEvent.contents.name || 'Unnamed Entity';
