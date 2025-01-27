@@ -1,8 +1,8 @@
-name: Test (JavaScript)
+name: Lint
 on: [pull_request, push]
 
 jobs:
-    test:
+    lint:
         # Skip if it's a PR from the same repo (as push will handle it)
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
         runs-on: ubuntu-22.04
@@ -19,8 +19,9 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            - name: Run TypeScript check
-              run: npx tsc
+            - name: Run eslint
+              run: npx eslint
 
-            - name: Run tests
-              run: npm run test -- run
+            # Prettier will check JavaScript and Java files.
+            - name: Run prettier check
+              run: npx prettier . --check
