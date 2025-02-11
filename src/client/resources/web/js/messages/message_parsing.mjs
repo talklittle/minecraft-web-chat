@@ -43,6 +43,7 @@ const FORMATTING_CODES = {
 
 /** @type {Record<string, string>} */
 const TEXT_CODES = { ...COLOR_CODES, ...FORMATTING_CODES };
+export const TEXT_CODES_PATTERN = `§([${Object.keys(TEXT_CODES).join('')}])`;
 
 const VALID_HOVER_EVENTS = ['show_text', 'show_item', 'show_entity'];
 
@@ -647,7 +648,7 @@ function createFormattedElement(text, codes) {
  */
 function colorizeText(text) {
     const result = [];
-    const regex = new RegExp(`§([${Object.keys(TEXT_CODES).join('')}])`, 'g');
+    const regex = new RegExp(TEXT_CODES_PATTERN, 'g');
     let lastIndex = 0;
     let match = regex.exec(text);
 
@@ -1028,13 +1029,11 @@ function formatComponent(component) {
     return result;
 }
 
-const NON_BREAKING_SPACE = '\u00A0';
-
 /**
- * Transforms text content into HTML.
+ * Transforms text content into HTML using § codes.
  * @param {Element} element
  */
-function formatPlainText(element) {
+export function formatPlainText(element) {
     const walker = document.createTreeWalker(
         element,
         NodeFilter.SHOW_TEXT,
@@ -1048,17 +1047,10 @@ function formatPlainText(element) {
     }
 
     for (const textNode of textNodes) {
-        let text = textNode.textContent ?? '';
-
-        // Replace runs of 2+ spaces with non-breaking spaces
-        text = text.replace(/[ ]{2,}/g, (match) =>
-            NON_BREAKING_SPACE.repeat(match.length),
-        );
-
         const parent = textNode.parentNode;
         if (!parent) continue;
 
-        const linkedElements = linkifyText(text);
+        const linkedElements = linkifyText(textNode.textContent ?? '');
 
         const finalElements = linkedElements.flatMap((element) => {
             if (element instanceof HTMLAnchorElement) {
