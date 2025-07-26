@@ -5,7 +5,6 @@ buildscript {
 plugins {
 	id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
-	id 'com.gradleup.shadow' version '8.3.8'
 }
 
 version = project.mod_version
@@ -33,11 +32,6 @@ loom {
 
 }
 
-configurations {
-    shadow // Define a shadow configuration
-    implementation.extendsFrom shadow // Extend implementation to include shadow dependencies
-}
-
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -52,9 +46,9 @@ dependencies {
 	annotationProcessor "org.projectlombok:lombok:${project.lombok_version}"
 	compileOnly "org.projectlombok:lombok:${project.lombok_version}"
 
-	// Implementation and included in shadow
+	// Include
 	implementation "io.javalin:javalin:${project.javalin_version}"
-	shadow "io.javalin:javalin:${project.javalin_version}"
+	include "io.javalin:javalin:${project.javalin_version}"
 
     implementation "org.xerial:sqlite-jdbc:${project.xerial_version}"
     include "org.xerial:sqlite-jdbc:${project.xerial_version}"
@@ -93,29 +87,6 @@ jar {
 	}
 
 }
-
-shadowJar {
-	// Make sure we are actually including relevant references
-	from sourceSets.main.output
-    from sourceSets.client.output
-    configurations = [project.configurations.shadow] // Include shadow dependencies
-    archiveClassifier.set("") // Make sure we end up with just one unified jar
-
-    // Relocate dependencies to avoid conflicts
-    relocate "io.javalin", "dev.creesch.shadow.io.javalin"
-    relocate "org.eclipse.jetty", "dev.creesch.shadow.jetty"
-
-	minimize()
-
-}
-
-remapJar {
-    dependsOn shadowJar
-    inputFile.set(shadowJar.archiveFile)
-    archiveClassifier.set("") // Produce the final remapped JAR without classifier
-}
-
-tasks.assemble.dependsOn remapJar
 
 // configure the maven publication
 publishing {
