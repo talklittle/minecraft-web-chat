@@ -328,15 +328,16 @@ beforeEach(() => {
 });
 
 /**
- * @type {readonly [string, Component, string][]}
+ * @type {readonly [string, Component, Record<string, string>, string][]}
  */
 const COMPONENT_FORMATTING_TESTS = [
     // Basic text formatting
-    ['empty component', { text: '' }, '<span></span>'],
-    ['component with text', { text: 'test' }, '<span>test</span>'],
+    ['empty component', { text: '' }, {}, '<span></span>'],
+    ['component with text', { text: 'test' }, {}, '<span>test</span>'],
     [
         'component with translation',
         { translate: 'argument.id.invalid' },
+        { 'argument.id.invalid': 'Invalid ID' },
         '<span>Invalid ID</span>',
     ],
 
@@ -344,16 +345,19 @@ const COMPONENT_FORMATTING_TESTS = [
     [
         'named color',
         { text: 'colored', color: 'red' },
+        {},
         '<span class="mc-red">colored</span>',
     ],
     [
         'hex color',
         { text: 'hex', color: '#ff0000' },
+        {},
         '<span style="color: rgb(255, 0, 0);">hex</span>',
     ],
     [
         'invalid color is ignored',
         { text: 'bad', color: 'invalid' },
+        {},
         '<span>bad</span>',
     ],
 
@@ -361,26 +365,31 @@ const COMPONENT_FORMATTING_TESTS = [
     [
         'bold text',
         { text: 'bold', bold: true },
+        {},
         '<span class="mc-bold">bold</span>',
     ],
     [
         'italic text',
         { text: 'italic', italic: true },
+        {},
         '<span class="mc-italic">italic</span>',
     ],
     [
         'underlined text',
         { text: 'underline', underlined: true },
+        {},
         '<span class="mc-underlined">underline</span>',
     ],
     [
         'strikethrough text',
         { text: 'strike', strikethrough: true },
+        {},
         '<span class="mc-strikethrough">strike</span>',
     ],
     [
         'obfuscated text',
         { text: 'hidden', obfuscated: true },
+        {},
         '<span class="mc-obfuscated">hidden</span>',
     ],
 
@@ -388,6 +397,7 @@ const COMPONENT_FORMATTING_TESTS = [
     [
         'multiple styles',
         { text: 'multi', bold: true, italic: true, color: 'blue' },
+        {},
         '<span class="mc-blue mc-bold mc-italic">multi</span>',
     ],
 
@@ -395,11 +405,13 @@ const COMPONENT_FORMATTING_TESTS = [
     [
         'extra string',
         { text: 'main', extra: ['extra'] },
+        {},
         '<span>mainextra</span>',
     ],
     [
         'extra component',
         { text: 'main', extra: [{ text: 'extra', bold: true }] },
+        {},
         '<span>main<span class="mc-bold">extra</span></span>',
     ],
     [
@@ -411,14 +423,16 @@ const COMPONENT_FORMATTING_TESTS = [
                 { text: '2', italic: true },
             ],
         },
+        {},
         '<span>main<span class="mc-bold">1</span><span class="mc-italic">2</span></span>',
     ],
-    ['extra number', { text: 'main', extra: [42] }, '<span>main42</span>'],
+    ['extra number', { text: 'main', extra: [42] }, {}, '<span>main42</span>'],
 
     // Translation with parameters
     [
         'translation with string param',
         { translate: 'argument.id.unknown', with: ['test'] },
+        { 'argument.id.unknown': 'Unknown ID: %s' },
         '<span>Unknown ID: test</span>',
     ],
     [
@@ -427,11 +441,13 @@ const COMPONENT_FORMATTING_TESTS = [
             translate: 'argument.id.unknown',
             with: [{ text: 'test', bold: true }],
         },
+        { 'argument.id.unknown': 'Unknown ID: %s' },
         '<span>Unknown ID: <span class="mc-bold">test</span></span>',
     ],
     [
         'translation with number param',
         { translate: 'argument.id.unknown', with: [42] },
+        { 'argument.id.unknown': 'Unknown ID: %s' },
         '<span>Unknown ID: 42</span>',
     ],
 
@@ -442,6 +458,7 @@ const COMPONENT_FORMATTING_TESTS = [
             text: 'hover',
             hover_event: { action: 'show_text', contents: 'tooltip' },
         },
+        {},
         '<span aria-label="tooltip">hover</span>',
     ],
     [
@@ -453,6 +470,7 @@ const COMPONENT_FORMATTING_TESTS = [
                 id: 'minecraft:diamond',
             },
         },
+        {},
         '<span aria-label="minecraft:diamond">item</span>',
     ],
     [
@@ -465,6 +483,7 @@ const COMPONENT_FORMATTING_TESTS = [
                 count: 64,
             },
         },
+        {},
         '<span aria-label="64x minecraft:diamond">items</span>',
     ],
     [
@@ -477,6 +496,7 @@ const COMPONENT_FORMATTING_TESTS = [
                 name: 'Mr. Pig',
             },
         },
+        {},
         '<span aria-label="Mr. Pig">entity</span>',
     ],
     [
@@ -497,6 +517,7 @@ const COMPONENT_FORMATTING_TESTS = [
                 { text: ']', color: 'gray' },
             ],
         },
+        { 'argument.entity.selector.allPlayers': 'All players' },
         '<span class="mc-gold">' +
             'All players' +
             '<span class="mc-gray"> [</span>' +
@@ -524,6 +545,7 @@ const COMPONENT_FORMATTING_TESTS = [
                 },
             ],
         },
+        {},
         '<span class="mc-gold">' +
             'Level 1 ' +
             '<span class="mc-bold">' +
@@ -545,11 +567,15 @@ const COMPONENT_FORMATTING_TESTS = [
                 { text: 'enabled', color: 'green' },
             ],
         },
+        {
+            'argument.block.property.invalid':
+                'Block %s does not accept %s for %s property',
+        },
         '<span class="mc-red">' +
             'Block ' +
             '<span class="mc-gray mc-italic">stone</span> ' +
-            "does not accept '" +
-            '<span class="mc-bold mc-underlined">waterlogged</span>\' ' +
+            'does not accept ' +
+            '<span class="mc-bold mc-underlined">waterlogged</span> ' +
             'for ' +
             '<span class="mc-green">enabled</span> ' +
             'property' +
@@ -578,6 +604,7 @@ const COMPONENT_FORMATTING_TESTS = [
                 },
             ],
         },
+        { 'argument.item.id.invalid': "Unknown item '%s'" },
         '<span class="mc-yellow">' +
             'Found item: ' +
             '<span class="mc-italic">' +
@@ -602,6 +629,11 @@ const COMPONENT_FORMATTING_TESTS = [
                 },
             ],
         },
+        {
+            'argument.player.toomany':
+                'Only one player is allowed, but the provided selector allows more than one',
+            'argument.entity.invalid': 'Invalid name or UUID',
+        },
         '<span class="mc-red">' +
             'Invalid name or UUID' +
             '<span class="mc-gray"> - </span>' +
@@ -615,28 +647,38 @@ const COMPONENT_FORMATTING_TESTS = [
     [
         'legacy color code',
         { text: '§4test' },
+        {},
         '<span><span class="mc-dark-red">test</span></span>',
     ],
     [
         'legacy color code with bold',
         { text: '§4§ltest' },
+        {},
         '<span><span class="mc-bold mc-dark-red">test</span></span>',
     ],
-    ['legacy color code with reset', { text: '§4§rtest' }, '<span>test</span>'],
+    [
+        'legacy color code with reset',
+        { text: '§4§rtest' },
+        {},
+        '<span>test</span>',
+    ],
     [
         'all color codes',
         { text: '§0§1§2§3§4§5§6§7§8§9§a§b§c§d§e§ftest' },
+        {},
         '<span><span class="mc-white">test</span></span>',
     ],
-    ['invalid color code', { text: '§xtest' }, '<span>§xtest</span>'],
+    ['invalid color code', { text: '§xtest' }, {}, '<span>§xtest</span>'],
     [
         'legacy color code with bold and reset',
         { text: '§4§ltest§rtest' },
+        {},
         '<span><span class="mc-bold mc-dark-red">test</span>test</span>',
     ],
     [
         'complex nested formatting',
         { text: '§4§l[§r§6Warning§4§l]§r: §7Message' },
+        {},
         '<span>' +
             '<span class="mc-bold mc-dark-red">[</span>' +
             '<span class="mc-gold">Warning</span>' +
@@ -651,15 +693,21 @@ const COMPONENT_FORMATTING_TESTS = [
             color: 'red',
             with: [{ text: '§4§ltest§r', color: 'blue' }],
         },
+        { 'argument.item.id.invalid': "Unknown item '%s'" },
         '<span class="mc-red">Unknown item \'<span class="mc-blue"><span class="mc-bold mc-dark-red">test</span></span>\'</span>',
     ],
 ];
 
-for (const [name, component, expected] of COMPONENT_FORMATTING_TESTS) {
+for (const [
+    name,
+    component,
+    translations,
+    expected,
+] of COMPONENT_FORMATTING_TESTS) {
     test(name, () => {
         expect(() => assertIsComponent(component)).not.toThrow();
 
-        const element = formatChatMessage(component, {});
+        const element = formatChatMessage(component, translations);
         if (element instanceof Text) {
             expect(element.textContent).toBe(expected);
         } else {
